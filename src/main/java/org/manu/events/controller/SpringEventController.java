@@ -1,6 +1,10 @@
 package org.manu.events.controller;
 
+import org.manu.events.dto.GreetingData;
+import org.manu.events.event.UserGreeted;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,8 +15,11 @@ import java.util.Date;
 import java.util.Map;
 
 @Controller
-//@RequestMapping(method = RequestMethod.GET)
+@RequestMapping(method = RequestMethod.GET)
 public class SpringEventController {
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     @Value("${application.message:Hello World}")
     private String message = "Hello World";
@@ -26,7 +33,13 @@ public class SpringEventController {
 
     @RequestMapping("/hello/{name}")
     public String greetAction(@PathVariable String name, Model model) {
-        model.addAttribute("name", name);
+        // create the event with data
+        GreetingData greetingData = new GreetingData(name);
+        UserGreeted userGreeted = new UserGreeted(this, greetingData);
+        // publish it
+        eventPublisher.publishEvent(userGreeted);
+        // put the data to the model
+        model.addAttribute("name", greetingData.getName());
         return "/greet";
     }
 
